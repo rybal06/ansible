@@ -532,10 +532,13 @@ class PlayContext(Base):
 
             elif self.become_method == 'dzdo':
 
-                exe = self.become_exe or 'dzdo'
-
-                becomecmd = '%s -u %s %s -c %s' % (exe, self.become_user, executable, success_cmd)
-
+                exe = 'dzdo'
+                # force quick error if password is required but not supplied, should prevent sudo hangs.
+                if self.become_pass:
+                    prompt = '[sudo via ansible, key=%s] password: ' % randbits
+                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                else:
+		    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
